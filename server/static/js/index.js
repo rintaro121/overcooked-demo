@@ -101,6 +101,7 @@ socket.on('start_game', function(data) {
         container_id : "overcooked",
         start_info : data.start_info
     };
+    console.log('start');
     window.spectating = data.spectating;
     $('#error-exit').hide();
     $("#overcooked").empty();

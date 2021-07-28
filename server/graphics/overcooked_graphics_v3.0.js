@@ -90,11 +90,13 @@ class OvercookedScene extends Phaser.Scene {
         this.hud_size = config.hud_size
         this.hud_data = {
             potential : config.start_state.potential,
-            intent : config.start_state.intent,
             score : config.start_state.score,
             time : config.start_state.time_left,
             bonus_orders : config.start_state.state.bonus_orders,
-            all_orders : config.start_state.state.all_orders
+            all_orders : config.start_state.state.all_orders,
+            //
+            intent : config.start_state.intent,
+
         }
     }
 
@@ -487,9 +489,9 @@ class OvercookedScene extends Phaser.Scene {
 
     _drawIntent(intent, sprites, board_height) {
         //agent_dir = "Agentの次の行動: " + agent_dir;
-        intent = "Agentの次の行動: " + "intent";
+        agent_dir = "Agentの次の行動: " + "intent";
         if (typeof(sprites['intent']) !== 'undefined') {
-            sprites["intent"].setText(intent);
+            sprites["agent_dir"].setText(agent_dir);
         }
         else{
             sprites['intent'] = this.add.text(
@@ -546,4 +548,3 @@ class OvercookedScene extends Phaser.Scene {
         return `soup_${status}_tomato_${num_tomatoes}_onion_${num_onions}.png`
     }
 }
-

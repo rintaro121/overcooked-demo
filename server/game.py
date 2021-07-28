@@ -407,6 +407,8 @@ class OvercookedGame(Game):
         self.human_players = set()
         self.npc_players = set()
 
+        self.intent = 'get onion'
+
         if randomized:
             random.shuffle(self.layouts)
 
@@ -494,6 +496,7 @@ class OvercookedGame(Game):
         # Apply overcooked game logic to get state transition
         prev_state = self.state
         self.state, info = self.mdp.get_state_transition(prev_state, joint_action)
+        print(self.state)
         if self.show_potential:
             self.phi = self.mdp.potential_function(prev_state, self.mp, gamma=0.99)
 
@@ -570,6 +573,8 @@ class OvercookedGame(Game):
         state_dict['state'] = self.state.to_dict()
         state_dict['score'] = self.score
         state_dict['time_left'] = max(self.max_time - (time() - self.start_time), 0)
+        state_dict['intent'] = self.intent
+        print(state_dict)
         return state_dict
 
     def to_json(self):
