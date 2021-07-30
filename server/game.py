@@ -10,6 +10,27 @@ from human_aware_rl.rllib.rllib import load_agent
 import random, os, pickle, json
 import ray
 
+import torch
+import torch.nn as nn
+import numpy as np
+import pickle
+
+class LSTMclassifier(nn.Module):
+    def __init__(self, embedding_dim, hidden_dim, target_size):
+        super(LSTMclassifier, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim)
+        self.linear1 = nn.Linear(hidden_dim, target_size)
+
+        self.softmax = nn.LogSoftmax(dim=1)
+    
+    def forward(self, x):
+        _, lstm_out = self.lstm(x)
+        x = self.linear1(lstm_out[0].view(-1, self.hidden_dim))
+        x = self.softmax(x)
+
+        return x
+
 # Relative path to where all static pre-trained agents are stored on server
 AGENT_DIR = None
 
@@ -407,7 +428,11 @@ class OvercookedGame(Game):
         self.human_players = set()
         self.npc_players = set()
 
+        self.traj = []
+
         self.intent = 'get onion'
+        self.model = LSTMclassifier(5*4*26, 128, 5)
+        self.model.load_state_dict(torch.load("aware_one_agent.pth"))
 
         if randomized:
             random.shuffle(self.layouts)
@@ -464,6 +489,9 @@ class OvercookedGame(Game):
 
     def is_finished(self):
         val = not self.layouts and self._curr_game_over()
+        if val:
+            f = open('actual_traj.pickle','wb')
+            pickle.dump(self.traj,f)
         return val
 
     def is_empty(self):
@@ -496,9 +524,24 @@ class OvercookedGame(Game):
         # Apply overcooked game logic to get state transition
         prev_state = self.state
         self.state, info = self.mdp.get_state_transition(prev_state, joint_action)
-        print(self.state)
+        #print(self.state)
         if self.show_potential:
             self.phi = self.mdp.potential_function(prev_state, self.mp, gamma=0.99)
+
+        ### Add LSTM model
+        interacts = ['get onion', 'get dish', 'carry onion', 'carry soup', 'get soup']
+        feature_state =  self.mdp.lossless_state_encoding(self.state)
+        agent_state = feature_state[1]
+
+        input_state = torch.from_numpy(np.array(agent_state))
+        input_state = input_state.reshape(-1, 1, 5*4*26).float()
+
+        output = self.model(input_state)
+        idx = torch.argmax(output)
+        self.intent = interacts[idx]
+        
+        self.traj.append((self.state.to_dict(), feature_state))
+        
 
         # Send next state to all background consumers if needed
         if self.curr_tick % self.ticks_per_ai_action == 0:
@@ -545,6 +588,7 @@ class OvercookedGame(Game):
         self.start_time = time()
         self.curr_tick = 0
         self.score = 0
+        self.intent = 'get_onion'
         self.threads = []
         for npc_policy in self.npc_policies:
             self.npc_policies[npc_policy].reset()
@@ -574,7 +618,6 @@ class OvercookedGame(Game):
         state_dict['score'] = self.score
         state_dict['time_left'] = max(self.max_time - (time() - self.start_time), 0)
         state_dict['intent'] = self.intent
-        print(state_dict)
         return state_dict
 
     def to_json(self):

@@ -31,9 +31,9 @@ RUN apt-get install -y libgl1-mesa-dev
 # Copy over remaining files
 COPY ./static ./static
 COPY ./*.py ./
-COPY ./graphics/$GRAPHICS ./static/js/graphics.js
+COPY ./graphics/overcooked_graphics_v2.2.js ./static/js/graphics.js
 COPY ./config.json ./config.json
-
+COPY ./aware_one_agent.pth ./
 
 
 # Set environment variables that will be used by app.py

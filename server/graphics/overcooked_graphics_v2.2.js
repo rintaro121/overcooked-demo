@@ -134,6 +134,7 @@ class OvercookedScene extends Phaser.Scene {
 
     update() {
         if (typeof(this.state) !== 'undefined') {
+            console.log('update')
             this._drawState(this.state, this.sprites);
         }
         if (typeof(this.hud_data) !== 'undefined') {
@@ -487,7 +488,7 @@ class OvercookedScene extends Phaser.Scene {
 
     _drawIntent(intent, sprites, board_height) {
         //agent_dir = "Agentの次の行動: " + agent_dir;
-        intent = "Agentの次の行動: " + "intent";
+        intent = "Agentの次の行動: " + intent;
         if (typeof(sprites['intent']) !== 'undefined') {
             sprites["intent"].setText(intent);
         }
